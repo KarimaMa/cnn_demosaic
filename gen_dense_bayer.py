@@ -53,7 +53,7 @@ if __name__ == "__main__":
             missing_bayer[7,:,:] = im[1,1::2,0::2] # g at b
 
             bayer_mosaic.tofile(os.path.join(out_basedir, "dense_bayer.data"))
-            im.tofile(os.path.join(out_basedir, "im.data"))
+            im.tofile(os.path.join(out_basedir, "image.data"))
             missing_bayer.tofile(os.path.join(out_basedir, "missing_bayer.data"))
 
             if (args.debug):
