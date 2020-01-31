@@ -12,13 +12,16 @@ def ids_from_file(filename):
     ids = [l.strip() for l in open(filename, "r")]
     return ids
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print(device)
+
 BATCH_SIZE = 64
-train_params = {'batch_size': BATCH_SIZE, 'shuffle': True, 'num_workers': 4}
+train_params = {'batch_size': BATCH_SIZE, 'shuffle': True, 'num_workers': 8}
 train_ids = ids_from_file("./dense_train_ids.txt") 
 train_dataset = Dataset(train_ids)
 train_generator = data.DataLoader(train_dataset, **train_params)
 
-test_params = {'batch_size': BATCH_SIZE, 'shuffle': False, 'num_workers': 4}
+test_params = {'batch_size': BATCH_SIZE, 'shuffle': False, 'num_workers': 8}
 test_ids = ids_from_file("./dense_test_ids.txt")
 test_dataset = Dataset(test_ids)
 test_generator = data.DataLoader(test_dataset, **test_params)
@@ -29,6 +32,7 @@ model parameters
 k = 3
 temp = 0.5
 model = DemosaicCNN(k)
+model.to(device)
 
 """
 training parameters
@@ -53,7 +57,7 @@ for epoch in range(epochs):
         batch_count += 1
         out = model(X["bayer"])
         optimizer.zero_grad()
-        loss = criterion(out[:,B:-B,B:-B], X["target"][:,B:-B,B:-B])
+        loss = criterion(out[:,B:-B,B:-B].to(device), X["target"][:,B:-B,B:-B].to(device))
         total_loss += (loss / (len(train_dataset)/BATCH_SIZE))
         loss.backward()
         optimizer.step()
@@ -66,7 +70,7 @@ for epoch in range(epochs):
     for X in test_generator:
         with torch.no_grad():
             out = model(X["bayer"])
-            loss = criterion(out, X["target"][:,B:-B,B:-B])
+            loss = criterion(out[:,B:-B,B:-B].to(device), X["target"][:,B:-B,B:-B].to(device))
             total_loss += (loss.item() / (len(test_dataset)/BATCH_SIZE))
 
     test_losses.append(total_loss)
