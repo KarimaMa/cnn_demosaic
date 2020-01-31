@@ -36,7 +36,7 @@ class Dataset(data.Dataset):
         image = np.fromfile(image_f, dtype=np.uint8).reshape((3, IMG_H, IMG_W)).astype(np.float32) / 255
         bayer = np.fromfile(bayer_f, dtype=np.uint8).reshape((4, IMG_H//2, IMG_W//2)).astype(np.float32) / 255
         target = np.fromfile(target_f, dtype=np.uint8).reshape((8, IMG_H//2, IMG_W//2)).astype(np.float32) / 255
-        target = target[:, PATCH_W//2:-PATCH_W//2+1, PATCH_W//2:-PATCH_W//2+1]
+        #target = target[:, PATCH_W//2:-PATCH_W//2+1, PATCH_W//2:-PATCH_W//2+1]
         
         image = torch.from_numpy(image).float()
         bayer = torch.from_numpy(bayer).float()

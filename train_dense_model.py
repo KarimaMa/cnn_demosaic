@@ -6,7 +6,7 @@ import os
 from torch.utils import data
 from PIL import Image
 from dense_dataset import Dataset
-from dense_model import DemosaicCNN
+from dense_dense_model import DemosaicCNN
 
 def ids_from_file(filename):
     ids = [l.strip() for l in open(filename, "r")]
@@ -35,7 +35,7 @@ training parameters
 """
 learning_rate = 1e-3
 decay = 1e-5
-epochs = 45
+epochs = 70
 
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate,  weight_decay=decay)
 criterion = nn.MSELoss()
@@ -45,6 +45,7 @@ batch_count = 0
 min_counter = 0
 min_test_loss = 1e10
 eps = 1e-5
+B = 2
 
 for epoch in range(epochs):
     total_loss = 0
@@ -52,7 +53,7 @@ for epoch in range(epochs):
         batch_count += 1
         out = model(X["bayer"])
         optimizer.zero_grad()
-        loss = criterion(out, X["target"])
+        loss = criterion(out[:,B:-B,B:-B], X["target"][:,B:-B,B:-B])
         total_loss += (loss / (len(train_dataset)/BATCH_SIZE))
         loss.backward()
         optimizer.step()
@@ -65,7 +66,7 @@ for epoch in range(epochs):
     for X in test_generator:
         with torch.no_grad():
             out = model(X["bayer"])
-            loss = criterion(out, X["target"])
+            loss = criterion(out, X["target"][:,B:-B,B:-B])
             total_loss += (loss.item() / (len(test_dataset)/BATCH_SIZE))
 
     test_losses.append(total_loss)
