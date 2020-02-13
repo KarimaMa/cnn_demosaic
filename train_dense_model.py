@@ -7,6 +7,7 @@ from torch.utils import data
 from PIL import Image
 from dense_dataset import Dataset
 from dense_dense_model import DemosaicCNN
+from config import *
 
 def ids_from_file(filename):
     ids = [l.strip() for l in open(filename, "r")]
@@ -29,9 +30,7 @@ test_generator = data.DataLoader(test_dataset, **test_params)
 """
 model parameters
 """
-k = 3
-temp = 0.5
-model = DemosaicCNN(k)
+model = DemosaicCNN()
 model.to(device)
 
 """
@@ -49,7 +48,7 @@ batch_count = 0
 min_counter = 0
 min_test_loss = 1e10
 eps = 1e-5
-B = 2
+B = PATCH_W//2
 
 for epoch in range(epochs):
     total_loss = 0
@@ -57,11 +56,11 @@ for epoch in range(epochs):
         batch_count += 1
         out = model(X["bayer"])
         optimizer.zero_grad()
-        loss = criterion(out[:,B:-B,B:-B].to(device), X["target"][:,B:-B,B:-B].to(device))
+        loss = criterion(out[...,B:-B,B:-B].to(device), X["target"][...,B:-B,B:-B].to(device))
         total_loss += (loss / (len(train_dataset)/BATCH_SIZE))
         loss.backward()
         optimizer.step()
-        if batch_count % 50 == 0:
+        if batch_count % 150 == 0:
             print("epoch {} batch loss {}".format(epoch, loss.item()))
             
     print("epoch {} train loss {}".format(epoch, total_loss.item()))
@@ -70,7 +69,7 @@ for epoch in range(epochs):
     for X in test_generator:
         with torch.no_grad():
             out = model(X["bayer"])
-            loss = criterion(out[:,B:-B,B:-B].to(device), X["target"][:,B:-B,B:-B].to(device))
+            loss = criterion(out[...,B:-B,B:-B].to(device), X["target"][...,B:-B,B:-B].to(device))
             total_loss += (loss.item() / (len(test_dataset)/BATCH_SIZE))
 
     test_losses.append(total_loss)
@@ -84,10 +83,9 @@ for epoch in range(epochs):
         min_test_loss = total_loss
         min_counter = 0
 
-    window = 6
-    if min_counter > 4:
+    if min_counter > 4 and learning_rate > 1e-5:
         min_counter = 0
-        learning_rate /= 5
+        learning_rate /= 10
         min_test_loss = min(test_losses)
         print("decreasing learning rate: {:.7f}".format(learning_rate))
 

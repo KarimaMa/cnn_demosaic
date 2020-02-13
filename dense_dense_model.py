@@ -4,10 +4,8 @@ import numpy as np
 
 
 class DemosaicCNN(nn.Module):
-    def __init__(self, k):
+    def __init__(self):
         super(DemosaicCNN, self).__init__()
-        self.k = k
-
         self.conv1 = torch.nn.Conv2d(4, 64, (3,3), bias=False, padding=1)
         self.relu1 = torch.nn.ReLU()
         self.conv2 = torch.nn.Conv2d(64, 64, (1,1), bias=False)
